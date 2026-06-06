@@ -158,11 +158,9 @@ namespace XakUjin2026.Controllers
         {
             try
             {
-                var (ujinToken, error) = await ResolveUjinTokenAsync(authorizationHeader);
-                if (error != null)
-                    return error;
-                if (string.IsNullOrEmpty(ujinToken))
-                    return Unauthorized(new { Message = "Ujin token not found" });
+                var authError = await EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
 
                 var entrance = await _context.Entrances
                     .Include(e => e.Devices)
@@ -188,6 +186,43 @@ namespace XakUjin2026.Controllers
                 return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
             }
         }
+
+        [HttpGet("entrances-list")]
+        public async Task<IActionResult> GetEntrancesList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        {
+            try
+            {
+                // Данные выдаём только авторизованным пользователям.
+                var authError = await EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var entrances = await _context.Entrances
+                    .Include(e => e.Devices)
+                        .ThenInclude(d => d.DeviceType)
+                    .ToListAsync();
+
+                var result = entrances.Select(e => new EntranceResponse
+                {
+                    id = e.Id,
+                    buildingId = e.BuildingId,
+                    entranceNumber = e.Number?.ToString(),
+                    devices = e.Devices.Select(d => new DeviceResponse
+                    {
+                        id = d.Id,
+                        deviceType = d.DeviceType?.Name
+                    }).ToList()
+                }).ToList();
+
+                return Ok(new { entrances = result });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
+            }
+        }
+
         private async Task<(string? token, IActionResult? error)> ResolveUjinTokenAsync(string? authToken)
         {
             if (string.IsNullOrWhiteSpace(authToken))
@@ -211,6 +246,35 @@ namespace XakUjin2026.Controllers
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
             return (user?.UjinToken, null);
+        }
+
+        private async Task<IActionResult?> EnsureAuthorizedAsync(string? authToken)
+        {
+            // Токен не прислан — пропускаем как фейкового пользователя (временная заглушка).
+            if (string.IsNullOrWhiteSpace(authToken))
+            {
+                var fakeUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == Const.FakeUserUsername);
+                return fakeUser == null
+                    ? NotFound(new { Message = "Fake user not found. Restart the app to seed it." })
+                    : null;
+            }
+
+            if (_tokenHelper.IsTokenExpired(authToken))
+                return Unauthorized(new { Message = "Expired token" });
+
+            var currentTokenId = _tokenHelper.GetCurrentTokenId(authToken);
+            if (_tokenHelper.IsInvalidToken(currentTokenId))
+                return Unauthorized(new { Message = "This token has been invalidated." });
+
+            var username = _tokenHelper.ExtractUsernameFromToken(authToken);
+            if (username == null)
+                return Unauthorized(new { Message = "Invalid token" });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null)
+                return Unauthorized(new { Message = "Invalid token" });
+
+            return null; // авторизован
         }
     }
 }

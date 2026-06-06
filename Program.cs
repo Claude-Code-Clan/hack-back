@@ -72,6 +72,18 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     DbSeeder.SeedFakeUser(db);
     DbSeeder.SeedDeviceTypes(db);
+
+    try
+    {
+        var buildingRequest = new BuildingListExtRequest(Const.FakeUserUjinToken);
+        var buildingResponse = await buildingRequest.SendAsync();
+        if (buildingResponse != null)
+            await BuildingSyncService.SyncAsync(db, buildingResponse);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Initial building sync failed: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.
