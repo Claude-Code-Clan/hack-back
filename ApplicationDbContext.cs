@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using XakUjin2026;
+using XakUjin2026.DB;
 
 public class ApplicationDbContext : DbContext
 {
@@ -9,10 +9,12 @@ public class ApplicationDbContext : DbContext
     }
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<InvalidToken> InvalidTokens { get; set; }
-    public DbSet<DeviceType> DeviceTypes { get; set; }
+    public DbSet<DeviceTypeEntity> DeviceTypes { get; set; }
     public DbSet<BuildingEntity> Buildings { get; set; }
     public DbSet<EntranceEntity> Entrances { get; set; }
     public DbSet<DeviceEntity> Devices { get; set; }
+    public DbSet<WidgetType> WidgetTypes { get; set; }
+    public DbSet<Widget> Widgets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,30 +28,44 @@ public class ApplicationDbContext : DbContext
             .HasIndex(d => new { d.EntranceId, d.DeviceTypeId })
             .IsUnique();
 
-        // modelBuilder.Entity<Apartment>()
-        //     .HasOne(a => a.Home)
-        //     .WithMany(h => h.Apartments)
-        //     .HasForeignKey(a => a.HomeId);
+        // Первичный ключ устройства.
+        modelBuilder.Entity<DeviceEntity>()
+            .HasKey(d => d.Id);
 
-        // modelBuilder.Entity<Apartment>()
-        //     .HasOne(a => a.ApplicationUser)
-        //     .WithMany()
-        //     .HasForeignKey(a => a.UserId)
-        //     .IsRequired(false);
+        // Внешний ключ: устройство -> подъезд.
+        modelBuilder.Entity<DeviceEntity>()
+            .HasOne(d => d.Entrance)
+            .WithMany(e => e.Devices)
+            .HasForeignKey(d => d.EntranceId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        // modelBuilder.Entity<Signal>()
-        //     .HasOne(a => a.Apartment)
-        //     .WithMany(h => h.Signals)
-        //     .HasForeignKey(a => a.ApartmentId);
+        // Внешний ключ: устройство -> тип устройства.
+        modelBuilder.Entity<DeviceEntity>()
+            .HasOne(d => d.DeviceType)
+            .WithMany()
+            .HasForeignKey(d => d.DeviceTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        // modelBuilder.Entity<Indication>()
-        //     .HasOne(a => a.Signal)
-        //     .WithMany(h => h.Indications)
-        //     .HasForeignKey(a => a.SignalId);
+        modelBuilder.Entity<WidgetType>()
+            .HasIndex(w => w.Title)
+            .IsUnique();
 
-        // modelBuilder.Entity<Signal>()
-        //    .Property(s => s.SignalId)
-        //    .ValueGeneratedOnAdd();
+        modelBuilder.Entity<Widget>()
+            .HasIndex(w => new { w.DeviceId, w.WidgetTypeId })
+            .IsUnique();
+
+        // Внешний ключ: виджет -> тип виджета.
+        modelBuilder.Entity<Widget>()
+            .HasOne(w => w.WidgetType)
+            .WithMany()
+            .HasForeignKey(w => w.WidgetTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Widget>()
+            .HasOne(w => w.Device)
+            .WithMany(d => d.Widgets)
+            .HasForeignKey(w => w.DeviceId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
 }

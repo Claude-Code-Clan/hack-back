@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace XakUjin2026
+namespace XakUjin2026.DB
 {
     public class DeviceEntity
     {
@@ -11,6 +11,8 @@ namespace XakUjin2026
         public EntranceEntity? Entrance { get; set; }
 
         public int DeviceTypeId { get; set; }
-        public DeviceType? DeviceType { get; set; }
+        public DeviceTypeEntity? DeviceType { get; set; }
+
+        public List<Widget> Widgets { get; set; } = new();
     }
 }

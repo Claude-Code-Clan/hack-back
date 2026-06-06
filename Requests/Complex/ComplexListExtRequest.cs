@@ -1,4 +1,6 @@
-namespace XakUjin2026
+using XakUjin2026.Model.ExternalRequest.Complex;
+
+namespace XakUjin2026.Requests.Complex
 {
     public class ComplexListExtRequest : BaseRequest
     {

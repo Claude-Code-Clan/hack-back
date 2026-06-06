@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace XakUjin2026
+namespace XakUjin2026.DB
 {
     public class BuildingEntity
     {

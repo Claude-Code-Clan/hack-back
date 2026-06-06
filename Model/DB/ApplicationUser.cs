@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace XakUjin2026
+namespace XakUjin2026.DB
 {
     public class ApplicationUser
     {

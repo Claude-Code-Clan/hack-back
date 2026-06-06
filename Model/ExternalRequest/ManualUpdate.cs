@@ -1,5 +1,4 @@
-namespace XakUjin2026
-{
+namespace XakUjin2026.Model.ExternalRequest{
     public class ManualUpdate
     {
         public string? from_day_of_month { get; set; }

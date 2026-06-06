@@ -1,5 +1,6 @@
-namespace XakUjin2026
-{
+using XakUjin2026.Model.Responses.Building.Entrance;
+
+namespace XakUjin2026.Model.Responses.Building{
     public class BuildingsResponse
     {
         public int? id { get; set; }

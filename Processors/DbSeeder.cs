@@ -1,7 +1,6 @@
-using Microsoft.EntityFrameworkCore;
+using XakUjin2026.DB;
 
-namespace XakUjin2026
-{
+namespace XakUjin2026.Processors{
     public static class DbSeeder
     {
         public static void SeedFakeUser(ApplicationDbContext context)
@@ -39,12 +38,31 @@ namespace XakUjin2026
 
             var missing = deviceTypeNames
                 .Where(name => !existing.Contains(name))
-                .Select(name => new DeviceType { Name = name })
+                .Select(name => new DeviceTypeEntity { Name = name })
                 .ToList();
 
             if (missing.Count > 0)
             {
                 context.DeviceTypes.AddRange(missing);
+                context.SaveChanges();
+            }
+        }
+        public static void SeedWidgetTypes(ApplicationDbContext context)
+        {
+            var widgetTypeNames = new[] { "staticinfo", "news", "parking", "storage", "weather", "camera", "other", "ads" };
+
+            var existing = context.WidgetTypes
+                .Select(w => w.Title)
+                .ToHashSet();
+
+            var missing = widgetTypeNames
+                .Where(name => !existing.Contains(name))
+                .Select(name => new WidgetType { Title = name })
+                .ToList();
+
+            if (missing.Count > 0)
+            {
+                context.WidgetTypes.AddRange(missing);
                 context.SaveChanges();
             }
         }

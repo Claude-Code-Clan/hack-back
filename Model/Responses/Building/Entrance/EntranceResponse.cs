@@ -1,5 +1,6 @@
-namespace XakUjin2026
-{
+using XakUjin2026.Model.Responses.Building.Entrance.Device;
+
+namespace XakUjin2026.Model.Responses.Building.Entrance{
     public class EntranceResponse
     {
         public int? id { get; set; }

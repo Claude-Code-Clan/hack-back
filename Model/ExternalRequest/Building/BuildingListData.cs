@@ -1,4 +1,4 @@
-namespace XakUjin2026
+namespace XakUjin2026.Model.ExternalRequest.Building
 {
     public class BuildingListData
     {

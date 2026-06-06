@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using XakUjin2026.DB;
 
-namespace XakUjin2026
-{
+namespace XakUjin2026.Processors{
     public class TokenHelper
     {
         private readonly ApplicationDbContext _context;

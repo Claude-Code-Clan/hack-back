@@ -1,58 +1,62 @@
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text.Json;
-public abstract class BaseRequest
+
+namespace XakUjin2026.Requests
 {
-    public QueryParameters queryParameters { get; set; }
-    public string? url { get; set; } = "https://hck-api.unicorn.icu/v1/";
-
-    protected BaseRequest(string? token = null)
+    public abstract class BaseRequest
     {
-        this.queryParameters = new QueryParameters(token);
-    }
+        public QueryParameters queryParameters { get; set; }
+        public string? url { get; set; } = "https://hck-api.unicorn.icu/v1/";
 
-    public async Task<T?> SendAsync<T>() where T : class
-    {
-        using (var httpClient = new HttpClient())
+        protected BaseRequest(string? token = null)
         {
-            try
+            this.queryParameters = new QueryParameters(token);
+        }
+
+        public async Task<T?> SendAsync<T>() where T : class
+        {
+            using (var httpClient = new HttpClient())
             {
-                string url = QueryHelpers.AddQueryString(this.url!, this.queryParameters.ToDictionary());
-                var response = await httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<T>(content);
+                    string url = QueryHelpers.AddQueryString(this.url!, this.queryParameters.ToDictionary());
+                    var response = await httpClient.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        return JsonSerializer.Deserialize<T>(content);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Request failed with status code: {response.StatusCode}");
+                        return null;
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"Request failed with status code: {response.StatusCode}");
+                    Console.WriteLine($"An error occurred while sending the request: {ex.Message}");
                     return null;
-                }   
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred while sending the request: {ex.Message}");
-                return null;
+                }
             }
         }
     }
-}
 
-public class QueryParameters
-{
-    public string? token { get; set; }
-    public QueryParameters(string? token = null)
+    public class QueryParameters
     {
-        this.token = token;
-    }
+        public string? token { get; set; }
+        public QueryParameters(string? token = null)
+        {
+            this.token = token;
+        }
 
-    // Преобразование в словарь для построения query-строки (?token=...).
-    // Пустые значения не добавляем.
-    public IDictionary<string, string?> ToDictionary()
-    {
-        var dict = new Dictionary<string, string?>();
-        if (!string.IsNullOrWhiteSpace(token))
-            dict["token"] = token;
-        return dict;
+        // Преобразование в словарь для построения query-строки (?token=...).
+        // Пустые значения не добавляем.
+        public IDictionary<string, string?> ToDictionary()
+        {
+            var dict = new Dictionary<string, string?>();
+            if (!string.IsNullOrWhiteSpace(token))
+                dict["token"] = token;
+            return dict;
+        }
     }
 }

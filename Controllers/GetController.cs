@@ -1,5 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using XakUjin2026.DB;
+using XakUjin2026.Processors;
+using XakUjin2026.Requests.Building;
+using XakUjin2026.Requests.Complex;
+using XakUjin2026.Model.ExternalRequest.Building;
+using XakUjin2026.Model.Responses.Building;
+using XakUjin2026.Model.Responses.Building.Entrance;
+using XakUjin2026.Model.Responses.Building.Entrance.Device;
 
 namespace XakUjin2026.Controllers
 {
@@ -11,12 +19,14 @@ namespace XakUjin2026.Controllers
         // Объявляются частные поля для контекста базы данных и вспомогательного класса для работы с токенами.
         private readonly ApplicationDbContext _context;
         private readonly TokenHelper _tokenHelper;
+        private readonly TokenController _tokenController;
 
         // Конструктор контроллера с внедрением зависимостей для контекста базы данных и вспомогательного класса токенов.
         public GetController(ApplicationDbContext context, TokenHelper tokenHelper)
         {
             _context = context;
             _tokenHelper = tokenHelper;
+            _tokenController = new TokenController(_context, _tokenHelper);
         }
 
         // Метод действия контроллера для получения имени пользователя из токена.
@@ -157,7 +167,7 @@ namespace XakUjin2026.Controllers
         {
             try
             {
-                var authError = await EnsureAuthorizedAsync(authorizationHeader);
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
                 if (authError != null)
                     return authError;
 
@@ -197,7 +207,7 @@ namespace XakUjin2026.Controllers
         {
             try
             {
-                var authError = await EnsureAuthorizedAsync(authorizationHeader);
+                var authError = await  _tokenController.EnsureAuthorizedAsync(authorizationHeader);
                 if (authError != null)
                     return authError;
 
@@ -232,7 +242,7 @@ namespace XakUjin2026.Controllers
             try
             {
                 // Данные выдаём только авторизованным пользователям.
-                var authError = await EnsureAuthorizedAsync(authorizationHeader);
+                var authError = await  _tokenController.EnsureAuthorizedAsync(authorizationHeader);
                 if (authError != null)
                     return authError;
 
@@ -267,7 +277,7 @@ namespace XakUjin2026.Controllers
         {
             try
             {
-                var authError = await EnsureAuthorizedAsync(authToken);
+                var authError = await  _tokenController.EnsureAuthorizedAsync(authToken);
                 if (authError != null)
                     return authError;
 
@@ -324,33 +334,6 @@ namespace XakUjin2026.Controllers
             return (user?.UjinToken, null);
         }
 
-        private async Task<IActionResult?> EnsureAuthorizedAsync(string? authToken)
-        {
-            // Токен не прислан — пропускаем как фейкового пользователя (временная заглушка).
-            if (string.IsNullOrWhiteSpace(authToken))
-            {
-                var fakeUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == Const.FakeUserUsername);
-                return fakeUser == null
-                    ? NotFound(new { Message = "Fake user not found. Restart the app to seed it." })
-                    : null;
-            }
 
-            if (_tokenHelper.IsTokenExpired(authToken))
-                return Unauthorized(new { Message = "Expired token" });
-
-            var currentTokenId = _tokenHelper.GetCurrentTokenId(authToken);
-            if (_tokenHelper.IsInvalidToken(currentTokenId))
-                return Unauthorized(new { Message = "This token has been invalidated." });
-
-            var username = _tokenHelper.ExtractUsernameFromToken(authToken);
-            if (username == null)
-                return Unauthorized(new { Message = "Invalid token" });
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null)
-                return Unauthorized(new { Message = "Invalid token" });
-
-            return null; // авторизован
-        }
     }
 }

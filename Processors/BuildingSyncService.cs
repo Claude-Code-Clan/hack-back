@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using XakUjin2026.DB;
+using XakUjin2026.Model.ExternalRequest.Building;
 
-namespace XakUjin2026
-{
+namespace XakUjin2026.Processors{
     // Сохраняет/обновляет здания, подъезды и устройства из ответа внешнего API.
     // Каждый подъезд получает по одному устройству на каждый тип из таблицы DeviceTypes.
     public static class BuildingSyncService

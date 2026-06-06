@@ -1,4 +1,6 @@
-namespace XakUjin2026
+using XakUjin2026.Model.ExternalRequest.Building;
+
+namespace XakUjin2026.Requests.Building
 {
     public class BuildingListExtRequest : BaseRequest
     {

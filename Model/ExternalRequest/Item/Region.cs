@@ -1,5 +1,4 @@
-namespace XakUjin2026
-{
+namespace XakUjin2026.Model.ExternalRequest.Item{
     // Регион ЖК.
     public class Region
     {

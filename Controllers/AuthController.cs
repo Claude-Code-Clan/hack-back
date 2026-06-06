@@ -1,18 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.Security.Claims;
-using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
-using System.Web;
-using BCrypt.Net;
-
+using XakUjin2026.DB;
+using XakUjin2026.Processors;
+using XakUjin2026.Model.Token;
 
 namespace XakUjin2026.Controllers
 {

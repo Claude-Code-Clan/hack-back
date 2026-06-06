@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace XakUjin2026
-{
+namespace XakUjin2026.Model.ExternalRequest{
     public class Address
     {
         public string? city { get; set; }

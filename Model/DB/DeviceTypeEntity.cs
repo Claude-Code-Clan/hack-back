@@ -1,6 +1,6 @@
-namespace XakUjin2026
+namespace XakUjin2026.DB
 {
-    public class DeviceType
+    public class DeviceTypeEntity
     {
         public int Id { get; set; }
         public string? Name { get; set; }

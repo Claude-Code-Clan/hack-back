@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using XakUjin2026;
+using XakUjin2026.Processors;
+using XakUjin2026.Requests.Building;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +72,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     DbSeeder.SeedFakeUser(db);
     DbSeeder.SeedDeviceTypes(db);
+    DbSeeder.SeedWidgetTypes(db);
 
     try
     {

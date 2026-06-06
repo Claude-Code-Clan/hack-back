@@ -1,5 +1,4 @@
-namespace XakUjin2026
-{
+namespace XakUjin2026.Model.ExternalRequest.Item{
     public class Item
     {
         public int? id { get; set; }

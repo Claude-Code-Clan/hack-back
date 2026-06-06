@@ -1,5 +1,4 @@
-namespace XakUjin2026
-{
+namespace XakUjin2026.Model.ExternalRequest{
     public class Links
     {
         public string? first { get; set; }

@@ -1,5 +1,4 @@
-namespace XakUjin2026
-{
+namespace XakUjin2026.Model.ExternalRequest{
     // Блок meta из data: параметры постраничной навигации.
     public class Meta
     {
