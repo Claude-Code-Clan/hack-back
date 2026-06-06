@@ -164,7 +164,6 @@ namespace XakUjin2026.Controllers
 
         // Метод действия контроллера для регистрации нового пользователя.
         [HttpPost("register")]
-        //public async Task<IActionResult> Register([FromBody] RegistrationRequest request)
        public async Task<IActionResult> Register([FromBody] RegistrationRequest request) {
             var email = request.email;
             var password = request.password;
@@ -181,7 +180,7 @@ namespace XakUjin2026.Controllers
             }
 
             // Хеширование пароля
-            string hashedPassword = password;
+            string? hashedPassword = password;
             string emailConfirmationCode = Guid.NewGuid().ToString();
 
             // Создание нового пользователя

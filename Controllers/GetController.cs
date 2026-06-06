@@ -68,7 +68,7 @@ namespace XakUjin2026.Controllers
 
         //Метод для получения Ujin токена из базы данных по JWT токену.
         [HttpPost("ujin-token")]
-        public async Task<IActionResult> GetUjinToken([FromHeader(Name = "Authorization")] string authorizationHeader)
+        public async Task<IActionResult> GetUjinToken([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
         {
             try
             {
