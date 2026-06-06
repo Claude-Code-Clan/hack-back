@@ -1,0 +1,45 @@
+{
+    "command": "api->v1->complex->list",
+    "message": "",
+    "error": 0,
+    "data": {
+        "links": {
+            "first": "https://api-uae-test.ujin.tech/api/v1/complex/list?page=1",
+            "prev": null,
+            "next": null,
+            "last": "https://api-uae-test.ujin.tech/api/v1/complex/list?page=1"
+        },
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 1,
+            "path": "https://api-uae-test.ujin.tech/api/v1/complex/list",
+            "per_page": "500",
+            "to": 1,
+            "total": 1
+        },
+        "items": [
+            {
+                "id": 63,
+                "title": "hackaton2026\\1",
+                "region": {
+                    "id": 4,
+                    "title": "Москва"
+                },
+                "timezone": "Europe/Moscow",
+                "paid_tickets_enabled": false
+            }
+        ]
+    },
+    "connection": {
+        "server_real_ip": "0.0.0.0",
+        "user_ip": "10.0.2.246"
+    },
+    "token": "ust-2814992-e47385a3c80dbbe1c8c693cfeb34baf2",
+    "fromdomain": "",
+    "worktime": "0.033sec",
+    "worktime_tmp": "0.033sec",
+    "request_uuid": "e9ed1bac-aa9b-44a1-abd7-56bb55ba4010",
+    "server_time": "2026-06-06 12:32:17",
+    "is_proxy": true
+}

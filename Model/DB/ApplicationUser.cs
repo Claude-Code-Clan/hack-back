@@ -14,6 +14,6 @@ namespace XakUjin2026
         public string? EmailConfirmationCode { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryDate { get; set; }
-        public string? UjinToken = "ust-2814992-e47385a3c80dbbe1c8c693cfeb34baf2";
+        public string? UjinToken { get; set; }
     }
 }

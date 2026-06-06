@@ -72,6 +72,14 @@ namespace XakUjin2026.Controllers
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(authorizationHeader))
+                {
+                    var fakeUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == Const.FakeUserUsername);
+                    if (fakeUser == null)
+                        return NotFound(new { Message = "Fake user not found. Restart the app to seed it." });
+                    return Ok(new { ujinToken = fakeUser.UjinToken });
+                }
+
                 // Извлечение имени пользователя из токена.
                 if (_tokenHelper.IsTokenExpired(authorizationHeader))
                     return Unauthorized(new { Message = "Expired token" });
@@ -97,6 +105,34 @@ namespace XakUjin2026.Controllers
                     return Unauthorized(new { Message = "Invalid token" });
             }
             // Обработка исключений и возврат ошибки сервера.
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
+            }
+        }
+
+        [HttpGet("complex-list")]
+        public async Task<IActionResult> GetComplexList([FromHeader(Name = "Authorization")] string authorizationHeader)
+        {
+            try
+            {
+                var ujinTokenResult = await GetUjinToken(authorizationHeader) as ObjectResult;
+                if (ujinTokenResult == null || ujinTokenResult.Value == null)
+                    return Unauthorized(new { Message = "Unable to retrieve Ujin token" });
+
+                var ujinToken = (ujinTokenResult.Value as dynamic).ujinToken;
+                if (ujinToken == null)
+                    return Unauthorized(new { Message = "Ujin token not found" });
+
+                var complexListRequest = new ComplexListExtRequest(ujinToken);
+                var complexListResponse = await complexListRequest.SendAsync();
+
+                if (complexListResponse != null)
+                    return Ok(complexListResponse);
+                else
+                    return StatusCode(502, new { Message = "Failed to retrieve complex list from external API" });
+            }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
