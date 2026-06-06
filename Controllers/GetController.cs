@@ -113,7 +113,7 @@ namespace XakUjin2026.Controllers
         }
 
         [HttpGet("complex-list")]
-        public async Task<IActionResult> GetComplexList([FromHeader(Name = "Authorization")] string authorizationHeader)
+        public async Task<IActionResult> GetComplexList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
         {
             try
             {
