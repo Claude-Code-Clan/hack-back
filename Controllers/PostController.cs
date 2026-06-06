@@ -66,7 +66,7 @@ namespace XakUjin2026.Controllers
                         var widget = device.Widgets.FirstOrDefault(w => w.WidgetTypeId == type.Id);
                         if (widget == null)
                         {
-                            widget = new Widget { DeviceId = device.Id, WidgetTypeId = type.Id };
+                            widget = new WidgetEntity { DeviceId = device.Id, WidgetTypeId = type.Id };
                             device.Widgets.Add(widget);
                         }
 
@@ -110,5 +110,128 @@ namespace XakUjin2026.Controllers
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }
+        [HttpPost("rss-link-add")]
+        public async Task<IActionResult> PostRSSLinkAdd([FromBody] RssLinksRequest request, [FromHeader(Name = "Authorization")] string authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var incoming = (request?.rssLinks ?? new List<RssLink>())
+                    .Where(r => !string.IsNullOrWhiteSpace(r.Title))
+                    .GroupBy(r => r.Title!.Trim())
+                    .Select(g => g.First())
+                    .ToList();
+
+                var titles = incoming.Select(r => r.Title!.Trim()).ToList();
+
+                var existingTitles = (await _context.RSSLinks
+                        .Where(r => titles.Contains(r.Title!))
+                        .Select(r => r.Title!)
+                        .ToListAsync())
+                    .ToHashSet();
+
+                var newLinks = incoming
+                    .Where(r => !existingTitles.Contains(r.Title!.Trim()))
+                    .Select(r => new RSSLinksEntity
+                    {
+                        Title = r.Title!.Trim(),
+                        Link = r.Link?.Trim()
+                    })
+                    .ToList();
+
+                if (newLinks.Count > 0)
+                {
+                    _context.RSSLinks.AddRange(newLinks);
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException)
+                    {
+                        return Conflict(new
+                        {
+                            Message = "One or more RSS link titles already exist",
+                            titles = newLinks.Select(l => l.Title)
+                        });
+                    }
+                }
+
+                return Ok(new { added = newLinks.Select(l => new { l.Id, l.Title, l.Link }) });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+        [HttpPost("rss-link-edit")]
+        public async Task<IActionResult> PostRSSLinkEdit([FromBody] RssLinksRequest request, [FromHeader(Name = "Authorization")] string authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var incoming = (request?.rssLinks ?? new List<RssLink>())
+                    .Where(r => r.Id.HasValue & !string.IsNullOrWhiteSpace(r.Link) & !string.IsNullOrWhiteSpace(r.Title))
+                    .GroupBy(r => r.Id)
+                    .Select(g => g.First())
+                    .ToList();
+                
+                var ids = incoming.Select(r => r.Id!.Value).ToList();
+
+                // Существующие записи по присланным id.
+                var existing = await _context.RSSLinks
+                    .Where(r => ids.Contains(r.Id))
+                    .ToDictionaryAsync(r => r.Id);
+
+                var updated = new List<RSSLinksEntity>();
+                var notFound = new List<int>();
+
+                foreach (var rss in incoming)
+                {
+                    if (existing.TryGetValue(rss.Id!.Value, out var entity))
+                    {
+                        entity.Title = rss.Title!.Trim();
+                        entity.Link = rss.Link!.Trim();
+                        updated.Add(entity);
+                    }
+                    else
+                    {
+                        notFound.Add(rss.Id!.Value);
+                    }
+                }
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    return Conflict(new
+                    {
+                        Message = "RSS link title must be unique",
+                        titles = updated.Select(u => u.Title)
+                    });
+                }
+
+                return Ok(new
+                {
+                    updated = updated.Select(u => new { u.Id, u.Title, u.Link }),
+                    notFound
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
     }
 }

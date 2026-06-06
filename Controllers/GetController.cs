@@ -8,6 +8,7 @@ using XakUjin2026.Model.ExternalRequest.Building;
 using XakUjin2026.Model.Responses.Building;
 using XakUjin2026.Model.Responses.Building.Entrance;
 using XakUjin2026.Model.Responses.Building.Entrance.Device;
+using XakUjin2026.Model.InternalRequest;
 
 namespace XakUjin2026.Controllers
 {
@@ -347,6 +348,32 @@ namespace XakUjin2026.Controllers
                 Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
+        }
+        
+        [HttpGet("rss-link-list")]
+        public async Task<IActionResult?> GetRssLinkList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var rssList = await _context.RSSLinks
+                    .Select(r => new
+                    {
+                        rssLinkId = r.Id,
+                        rssLink = r.Link 
+                    }).ToListAsync();
+
+                return Ok(new { rssList });
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+            
         }
         private async Task<(string? token, IActionResult? error)> ResolveUjinTokenAsync(string? authToken)
         {

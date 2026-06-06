@@ -27,7 +27,7 @@ namespace XakUjin2026.Processors{
         }
         public void ToInvalidToken(string currentTokenId, DateTime currentTokenExpiryDate)
         {
-            var invalidToken = new InvalidToken
+            var invalidToken = new InvalidTokenEntity
             {
                 TokenId = currentTokenId, // Идентификатор текущего JWT
                 ExpiryDate = currentTokenExpiryDate // Время истечения текущего JWT

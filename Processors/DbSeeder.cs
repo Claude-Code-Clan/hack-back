@@ -9,7 +9,7 @@ namespace XakUjin2026.Processors{
 
             if (fakeUser == null)
             {
-                context.Users.Add(new ApplicationUser
+                context.Users.Add(new ApplicationUserEntity
                 {
                     Username = Const.FakeUserUsername,
                     Email = Const.FakeUserEmail,
@@ -57,7 +57,7 @@ namespace XakUjin2026.Processors{
 
             var missing = widgetTypeNames
                 .Where(name => !existing.Contains(name))
-                .Select(name => new WidgetType { Title = name })
+                .Select(name => new WidgetTypeEntity { Title = name })
                 .ToList();
 
             if (missing.Count > 0)

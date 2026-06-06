@@ -7,15 +7,16 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }
-    public DbSet<ApplicationUser> Users { get; set; }
-    public DbSet<InvalidToken> InvalidTokens { get; set; }
+    public DbSet<ApplicationUserEntity> Users { get; set; }
+    public DbSet<InvalidTokenEntity> InvalidTokens { get; set; }
     public DbSet<DeviceTypeEntity> DeviceTypes { get; set; }
     public DbSet<BuildingEntity> Buildings { get; set; }
     public DbSet<EntranceEntity> Entrances { get; set; }
     public DbSet<DeviceEntity> Devices { get; set; }
-    public DbSet<WidgetType> WidgetTypes { get; set; }
-    public DbSet<Widget> Widgets { get; set; }
-
+    public DbSet<WidgetTypeEntity> WidgetTypes { get; set; }
+    public DbSet<WidgetEntity> Widgets { get; set; }
+    public DbSet<RSSLinksEntity> RSSLinks { get; set; }
+    public DbSet<RSSWidgetEntity> RSSWidgets { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Подъезд уникален в рамках здания по номеру — для upsert при синхронизации.
@@ -46,26 +47,46 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(d => d.DeviceTypeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<WidgetType>()
+        modelBuilder.Entity<WidgetTypeEntity>()
             .HasIndex(w => w.Title)
             .IsUnique();
 
-        modelBuilder.Entity<Widget>()
+        modelBuilder.Entity<WidgetEntity>()
             .HasIndex(w => new { w.DeviceId, w.WidgetTypeId })
             .IsUnique();
 
         // Внешний ключ: виджет -> тип виджета.
-        modelBuilder.Entity<Widget>()
+        modelBuilder.Entity<WidgetEntity>()
             .HasOne(w => w.WidgetType)
             .WithMany()
             .HasForeignKey(w => w.WidgetTypeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Widget>()
+        modelBuilder.Entity<WidgetEntity>()
             .HasOne(w => w.Device)
             .WithMany(d => d.Widgets)
             .HasForeignKey(w => w.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RSSWidgetEntity>()
+            .HasKey(rw => new { rw.IdRss, rw.IdWidget });
+
+        modelBuilder.Entity<RSSWidgetEntity>()
+            .HasOne(rw => rw.Rss)
+            .WithMany(r => r.RSSWidgets)
+            .HasForeignKey(rw => rw.IdRss)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RSSWidgetEntity>()
+            .HasOne(rw => rw.Widget)
+            .WithMany()
+            .HasForeignKey(rw => rw.IdWidget)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Название RSS-ссылки уникально.
+        modelBuilder.Entity<RSSLinksEntity>()
+            .HasIndex(r => r.Title)
+            .IsUnique();
     }
 
 }

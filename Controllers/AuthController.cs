@@ -174,7 +174,7 @@ namespace XakUjin2026.Controllers
             string emailConfirmationCode = Guid.NewGuid().ToString();
 
             // Создание нового пользователя
-            var newUser = new ApplicationUser
+            var newUser = new ApplicationUserEntity
             {
                 Username = username,
                 Email = email,

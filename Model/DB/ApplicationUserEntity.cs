@@ -2,7 +2,7 @@
 
 namespace XakUjin2026.DB
 {
-    public class ApplicationUser
+    public class ApplicationUserEntity
     {
         [Key]
         public int UserId { get; set; }
