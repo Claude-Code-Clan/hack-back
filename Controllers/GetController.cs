@@ -1,12 +1,4 @@
-﻿using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using System.Net.Http;
-using System.Net.Http.Json;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace XakUjin2026.Controllers
@@ -66,45 +58,17 @@ namespace XakUjin2026.Controllers
             }
         }
 
-        //Метод для получения Ujin токена из базы данных по JWT токену.
         [HttpPost("ujin-token")]
         public async Task<IActionResult> GetUjinToken([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(authorizationHeader))
-                {
-                    var fakeUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == Const.FakeUserUsername);
-                    if (fakeUser == null)
-                        return NotFound(new { Message = "Fake user not found. Restart the app to seed it." });
-                    return Ok(new { ujinToken = fakeUser.UjinToken });
-                }
+                var (ujinToken, error) = await ResolveUjinTokenAsync(authorizationHeader);
+                if (error != null)
+                    return error;
 
-                // Извлечение имени пользователя из токена.
-                if (_tokenHelper.IsTokenExpired(authorizationHeader))
-                    return Unauthorized(new { Message = "Expired token" });
-
-                // Получение идентификатора текущего токена.
-                var currentTokenId = _tokenHelper.GetCurrentTokenId(authorizationHeader);
-
-                // Проверка действительности токена.
-                if (_tokenHelper.IsInvalidToken(currentTokenId))
-                    return Unauthorized(new { Message = "This token has been invalidated." });
-
-                // Извлечение имени пользователя из токена.
-                var username = _tokenHelper.ExtractUsernameFromToken(Request.Headers["Authorization"].ToString());
-
-                // Если имя пользователя найдено, возвращается ответ с Ujin токеном.
-                if (username != null)
-                {
-                    var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-                    return Ok(new { ujinToken = user?.UjinToken });
-                }
-                // В противном случае возвращается ответ об ошибке.
-                else
-                    return Unauthorized(new { Message = "Invalid token" });
+                return Ok(new { ujinToken });
             }
-            // Обработка исключений и возврат ошибки сервера.
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
@@ -117,12 +81,10 @@ namespace XakUjin2026.Controllers
         {
             try
             {
-                var ujinTokenResult = await GetUjinToken(authorizationHeader) as ObjectResult;
-                if (ujinTokenResult == null || ujinTokenResult.Value == null)
-                    return Unauthorized(new { Message = "Unable to retrieve Ujin token" });
-
-                var ujinToken = (ujinTokenResult.Value as dynamic).ujinToken;
-                if (ujinToken == null)
+                var (ujinToken, error) = await ResolveUjinTokenAsync(authorizationHeader);
+                if (error != null)
+                    return error;
+                if (string.IsNullOrEmpty(ujinToken))
                     return Unauthorized(new { Message = "Ujin token not found" });
 
                 var complexListRequest = new ComplexListExtRequest(ujinToken);
@@ -138,6 +100,117 @@ namespace XakUjin2026.Controllers
                 Console.WriteLine(ex);
                 return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
             }
+        }
+
+        [HttpGet("building-list")]
+        public async Task<IActionResult> GetBuildingList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        {
+            try
+            {
+                var (ujinToken, error) = await ResolveUjinTokenAsync(authorizationHeader);
+                if (error != null)
+                    return error;
+                if (string.IsNullOrEmpty(ujinToken))
+                    return Unauthorized(new { Message = "Ujin token not found" });
+
+                var buildingListRequest = new BuildingListExtRequest(ujinToken);
+                var buildingListResponse = await buildingListRequest.SendAsync();
+
+                if (buildingListResponse == null)
+                    return StatusCode(502, new { Message = "Failed to retrieve building list from external API" });
+
+                await BuildingSyncService.SyncAsync(_context, buildingListResponse);
+
+                var buildings = await _context.Buildings
+                    .Include(b => b.Entrances)
+                        .ThenInclude(e => e.Devices)
+                            .ThenInclude(d => d.DeviceType)
+                    .ToListAsync();
+
+                var result = buildings.Select(b => new
+                {
+                    id = b.Id,
+                    title = b.Title,
+                    entrances = b.Entrances.Select(e => new EntranceResponse
+                    {
+                        id = e.Id,
+                        buildingId = b.Id,
+                        entranceNumber = e.Number?.ToString(),
+                        devices = e.Devices.Select(d => new DeviceResponse
+                        {
+                            id = d.Id,
+                            deviceType = d.DeviceType?.Name
+                        }).ToList()
+                    }).ToList()
+                }).ToList();
+
+                return Ok(new { buildings = result });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
+            }
+        }
+
+        [HttpGet("devices-list")]
+        public async Task<IActionResult> GetDevicesList([FromQuery] int entranceId, [FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        {
+            try
+            {
+                var (ujinToken, error) = await ResolveUjinTokenAsync(authorizationHeader);
+                if (error != null)
+                    return error;
+                if (string.IsNullOrEmpty(ujinToken))
+                    return Unauthorized(new { Message = "Ujin token not found" });
+
+                var entrance = await _context.Entrances
+                    .Include(e => e.Devices)
+                        .ThenInclude(d => d.DeviceType)
+                    .FirstOrDefaultAsync(e => e.Id == entranceId);
+
+                if (entrance == null)
+                    return NotFound(new { Message = "Entrance not found" });
+
+                var devices = entrance.Devices
+                    .Select(d => new DeviceResponse
+                    {
+                        id = d.Id,
+                        deviceType = d.DeviceType?.Name
+                    })
+                    .ToList();
+
+                return Ok(new { entranceId, devices });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
+            }
+        }
+        private async Task<(string? token, IActionResult? error)> ResolveUjinTokenAsync(string? authToken)
+        {
+            if (string.IsNullOrWhiteSpace(authToken))
+            {
+                var fakeUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == Const.FakeUserUsername);
+                if (fakeUser == null)
+                    return (null, NotFound(new { Message = "Fake user not found. Restart the app to seed it." }));
+                return (fakeUser.UjinToken, null);
+            }
+
+            if (_tokenHelper.IsTokenExpired(authToken))
+                return (null, Unauthorized(new { Message = "Expired token" }));
+
+            var currentTokenId = _tokenHelper.GetCurrentTokenId(authToken);
+            if (_tokenHelper.IsInvalidToken(currentTokenId))
+                return (null, Unauthorized(new { Message = "This token has been invalidated." }));
+
+            var username = _tokenHelper.ExtractUsernameFromToken(authToken);
+            if (username == null)
+                return (null, Unauthorized(new { Message = "Invalid token" }));
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            return (user?.UjinToken, null);
         }
     }
 }

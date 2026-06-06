@@ -1,0 +1,151 @@
+{
+    "command": "api->v1->buildings->get-list-crm",
+    "message": "",
+    "error": 0,
+    "data": {
+        "links": {
+            "first": "https://api-uae-test.ujin.tech/api/v1/buildings/get-list-crm?page=1",
+            "prev": null,
+            "next": "https://api-uae-test.ujin.tech/api/v1/buildings/get-list-crm?page=2",
+            "last": "https://api-uae-test.ujin.tech/api/v1/buildings/get-list-crm?page=5"
+        },
+        "meta": {
+            "current_page": 1,
+            "from": 1,
+            "last_page": 5,
+            "path": "https://api-uae-test.ujin.tech/api/v1/buildings/get-list-crm",
+            "per_page": "10",
+            "to": 2,
+            "total": 2
+        },
+        "buildings": [
+            {
+                "id": 121,
+                "complex": {
+                    "id": 63,
+                    "title": "hackaton2026\\1",
+                    "timezone": "Europe/Moscow"
+                },
+                "building": {
+                    "id": 121,
+                    "title": "Здание № 1/1",
+                    "alias": "",
+                    "floor": 1,
+                    "start_work_time": null,
+                    "end_work_time": null,
+                    "fias": null,
+                    "apartmentCount": 6,
+                    "entranceCount": 2,
+                    "address": {
+                        "city": "Москва",
+                        "street": null,
+                        "house": ".",
+                        "houseNumber": null,
+                        "placementNumber": "",
+                        "fullAddress": "."
+                    },
+                    "sell_enabled": false,
+                    "sell_emails": [],
+                    "security_number": null,
+                    "ext_guid": "",
+                    "guest_scud_pass_limit": 0,
+                    "buildings_properties_rent_available": false,
+                    "resident_request_variant": "resident-request-by-owner",
+                    "apartment_plan_default": null,
+                    "meters": {
+                        "mode": "automatic",
+                        "manual-update": {
+                            "from_day_of_month": null,
+                            "until_day_of_month": null,
+                            "push_day_of_month": null,
+                            "notification_message": null
+                        }
+                    },
+                    "paid_tickets_allowed": false
+                },
+                "entrances2": [
+                    {
+                        "number": 1,
+                        "first_apartment": 1,
+                        "last_apartment": 3
+                    },
+                    {
+                        "number": 1,
+                        "first_apartment": 1,
+                        "last_apartment": 3
+                    }
+                ],
+                "statistics": []
+            },
+            {
+                "id": 122,
+                "complex": {
+                    "id": 63,
+                    "title": "hackaton2026\\1",
+                    "timezone": "Europe/Moscow"
+                },
+                "building": {
+                    "id": 122,
+                    "title": "Здание № 1/2",
+                    "alias": "",
+                    "floor": 1,
+                    "start_work_time": null,
+                    "end_work_time": null,
+                    "fias": null,
+                    "apartmentCount": 6,
+                    "entranceCount": 2,
+                    "address": {
+                        "city": "Москва",
+                        "street": null,
+                        "house": ".",
+                        "houseNumber": null,
+                        "placementNumber": "",
+                        "fullAddress": "."
+                    },
+                    "sell_enabled": false,
+                    "sell_emails": [],
+                    "security_number": null,
+                    "ext_guid": "",
+                    "guest_scud_pass_limit": 0,
+                    "buildings_properties_rent_available": false,
+                    "resident_request_variant": "resident-request-by-owner",
+                    "apartment_plan_default": null,
+                    "meters": {
+                        "mode": "automatic",
+                        "manual-update": {
+                            "from_day_of_month": null,
+                            "until_day_of_month": null,
+                            "push_day_of_month": null,
+                            "notification_message": null
+                        }
+                    },
+                    "paid_tickets_allowed": false
+                },
+                "entrances2": [
+                    {
+                        "number": 1,
+                        "first_apartment": 1,
+                        "last_apartment": 3
+                    },
+                    {
+                        "number": 1,
+                        "first_apartment": 1,
+                        "last_apartment": 3
+                    }
+                ],
+                "statistics": []
+            }
+        ]
+    },
+    "connection": {
+        "server_real_ip": "0.0.0.0",
+        "user_ip": "10.0.2.7"
+    },
+    "token": "ust-2814992-e47385a3c80dbbe1c8c693cfeb34baf2",
+    "fromdomain": "",
+    "worktime": "0.17sec",
+    "worktime_tmp": "0.17sec",
+    "request_uuid": "63453c0d-a7e3-4338-977d-46b4963ea6e5",
+    "server_time": "2026-06-06 14:14:40",
+    "is_proxy": true
+}

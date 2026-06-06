@@ -9,9 +9,23 @@ public class ApplicationDbContext : DbContext
     }
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<InvalidToken> InvalidTokens { get; set; }
+    public DbSet<DeviceType> DeviceTypes { get; set; }
+    public DbSet<BuildingEntity> Buildings { get; set; }
+    public DbSet<EntranceEntity> Entrances { get; set; }
+    public DbSet<DeviceEntity> Devices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Подъезд уникален в рамках здания по номеру — для upsert при синхронизации.
+        modelBuilder.Entity<EntranceEntity>()
+            .HasIndex(e => new { e.BuildingId, e.Number })
+            .IsUnique();
+
+        // Устройство уникально в рамках подъезда по типу — у подъезда не более одного устройства каждого типа.
+        modelBuilder.Entity<DeviceEntity>()
+            .HasIndex(d => new { d.EntranceId, d.DeviceTypeId })
+            .IsUnique();
+
         // modelBuilder.Entity<Apartment>()
         //     .HasOne(a => a.Home)
         //     .WithMany(h => h.Apartments)

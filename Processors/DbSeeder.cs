@@ -28,5 +28,25 @@ namespace XakUjin2026
                 context.SaveChanges();
             }
         }
+
+        public static void SeedDeviceTypes(ApplicationDbContext context)
+        {
+            var deviceTypeNames = new[] { "Холл", "Лифтовая кабина", "Ресепшн" };
+
+            var existing = context.DeviceTypes
+                .Select(d => d.Name)
+                .ToHashSet();
+
+            var missing = deviceTypeNames
+                .Where(name => !existing.Contains(name))
+                .Select(name => new DeviceType { Name = name })
+                .ToList();
+
+            if (missing.Count > 0)
+            {
+                context.DeviceTypes.AddRange(missing);
+                context.SaveChanges();
+            }
+        }
     }
 }
