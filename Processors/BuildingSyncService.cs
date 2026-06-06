@@ -32,8 +32,11 @@ namespace XakUjin2026
                     context.Buildings.Add(building);
                 }
 
+                string? extAddress = ext.address?.GetFullAddress()?.Trim();
+
                 // Обновляем поля здания (EF сам не пишет UPDATE, если ничего не изменилось).
                 building.Title = ext.title;
+                building.Address = extAddress;
                 building.Alias = ext.alias;
                 building.Floor = ext.floor;
                 building.ApartmentCount = ext.apartmentCount;

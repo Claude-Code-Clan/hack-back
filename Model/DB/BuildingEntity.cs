@@ -10,6 +10,7 @@ namespace XakUjin2026
         public int Id { get; set; }
 
         public string? Title { get; set; }
+        public string? Address { get; set; }
         public string? Alias { get; set; }
         public int? Floor { get; set; }
         public int? ApartmentCount { get; set; }

@@ -102,8 +102,8 @@ namespace XakUjin2026.Controllers
             }
         }
 
-        [HttpGet("building-list")]
-        public async Task<IActionResult> GetBuildingList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        [HttpGet("building-list-ext")]
+        public async Task<IActionResult> GetBuildingListExt([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
         {
             try
             {
@@ -152,7 +152,46 @@ namespace XakUjin2026.Controllers
                 return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
             }
         }
+        [HttpGet("building-list")]
+        public async Task<IActionResult> GetBuildingList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
 
+                var buildings = await _context.Buildings
+                    .Include(b => b.Entrances)
+                        .ThenInclude(e => e.Devices)
+                            .ThenInclude(d => d.DeviceType)
+                    .ToListAsync();
+
+                var buildingsResponse = buildings.Select(b => new BuildingsResponse(
+                    id: b.Id,
+                    buildingTitle: b.Title,
+                    buildingAddress: b.Address,
+                    entrances: b.Entrances.Select(e => new EntranceResponse
+                    {
+                        id = e.Id,
+                        buildingId = b.Id,
+                        entranceNumber = e.Number?.ToString(),
+                        devices = e.Devices.Select(d => new DeviceResponse
+                        {
+                            id = d.Id,
+                            deviceType = d.DeviceType?.Name
+                        }).ToList()
+                    }).ToList()
+                )).ToList();
+
+                return Ok(new { buildings = buildingsResponse });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
+            }
+        }
         [HttpGet("devices-list")]
         public async Task<IActionResult> GetDevicesList([FromQuery] int entranceId, [FromHeader(Name = "Authorization")] string? authorizationHeader = null)
         {
@@ -188,7 +227,7 @@ namespace XakUjin2026.Controllers
         }
 
         [HttpGet("entrances-list")]
-        public async Task<IActionResult> GetEntrancesList([FromHeader(Name = "Authorization")] string? authorizationHeader = null)
+        public async Task<IActionResult> GetEntrancesList([FromQuery] int buildingId, [FromHeader(Name = "Authorization")] string? authorizationHeader = null)
         {
             try
             {
@@ -200,6 +239,7 @@ namespace XakUjin2026.Controllers
                 var entrances = await _context.Entrances
                     .Include(e => e.Devices)
                         .ThenInclude(d => d.DeviceType)
+                    .Where(e => e.BuildingId == buildingId)
                     .ToListAsync();
 
                 var result = entrances.Select(e => new EntranceResponse
@@ -222,7 +262,43 @@ namespace XakUjin2026.Controllers
                 return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
             }
         }
+        [HttpGet("entrance-info")]
+        public async Task<IActionResult?> GetEntranceInfo([FromQuery] int entranceId, [FromHeader(Name = "Authorization")] string? authToken)
+        {
+            try
+            {
+                var authError = await EnsureAuthorizedAsync(authToken);
+                if (authError != null)
+                    return authError;
 
+                var entrance = await _context.Entrances
+                    .Include(e => e.Devices)
+                        .ThenInclude(d => d.DeviceType)
+                    .FirstOrDefaultAsync(e => e.Id == entranceId);
+
+                if (entrance == null)
+                    return NotFound(new { Message = "Entrance not found" });
+
+                var result = new EntranceResponse
+                {
+                    id = entrance.Id,
+                    buildingId = entrance.BuildingId,
+                    entranceNumber = entrance.Number?.ToString(),
+                    devices = entrance.Devices.Select(d => new DeviceResponse
+                    {
+                        id = d.Id,
+                        deviceType = d.DeviceType?.Name
+                    }).ToList()
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
+            }
+        }
         private async Task<(string? token, IActionResult? error)> ResolveUjinTokenAsync(string? authToken)
         {
             if (string.IsNullOrWhiteSpace(authToken))
