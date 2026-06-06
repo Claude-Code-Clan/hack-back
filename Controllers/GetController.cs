@@ -309,6 +309,45 @@ namespace XakUjin2026.Controllers
                 return StatusCode(500, new { Error = "An error occurred while processing your request. Please try again later." });
             }
         }
+
+        [HttpPost("get-widgets")]
+        public async Task<IActionResult?> GetWidgets([FromBody] Model.InternalRequest.GetWidgets request, [FromHeader(Name = "Authorization")] string authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var deviceIds = (request.deviceIds ?? Array.Empty<int>())
+                    .Distinct()
+                    .ToList();
+
+                var devices = await _context.Devices
+                    .Where(d => deviceIds.Contains(d.Id))
+                    .Select(d => new
+                    {
+                        deviceId = d.Id,
+                        widgets = d.Widgets.Select(wg => new
+                        {
+                            id = wg.Id,
+                            widgetType = wg.WidgetType!.Title,
+                            x = wg.XPosition,
+                            y = wg.YPosition,
+                            w = wg.Width,
+                            h = wg.Height
+                        }).ToList()
+                    })
+                    .ToListAsync();
+
+                return Ok(new { devices });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
         private async Task<(string? token, IActionResult? error)> ResolveUjinTokenAsync(string? authToken)
         {
             if (string.IsNullOrWhiteSpace(authToken))
