@@ -1,0 +1,47 @@
+services:
+  pgsql:
+    image: postgres:13
+    container_name: xakujin_pgsql
+    restart: always
+    environment:
+      POSTGRES_DB: xakujindb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    networks:
+      - appnet
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-U", "appuser", "-d", "xakujindb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+ 
+  dotnetapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotnetapp
+    depends_on:
+      pgsql:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_HOST=pgsql
+      - DB_PORT=5432
+      - DB_NAME=xakujindb
+      - DB_USER=appuser
+      - DB_PASSWORD=secretpassword
+    ports:
+      - "8080:8080"
+      - "8081:8081" 
+    networks:
+      - appnet
+
+volumes:
+  pgsql_data:
+
+networks:
+  appnet:
