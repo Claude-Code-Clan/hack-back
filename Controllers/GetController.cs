@@ -375,6 +375,38 @@ namespace XakUjin2026.Controllers
             }
             
         }
+        [HttpPost("get-alerts")]
+        public async Task<IActionResult?> GetAlerts([FromBody] Model.InternalRequest.GetAlerts request, [FromHeader(Name = "Authorization")] string authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var deviceIds = (request.deviceIds ?? Array.Empty<int>())
+                    .Distinct()
+                    .ToList();
+
+                var alerts = await _context.Alerts
+                    .Where(a => deviceIds.Contains(a.DeviceId) && a.Status == AlertStatus.Warning)
+                    .Select(a => new
+                    {
+                        id = a.Id,
+                        deviceId = a.DeviceId,
+                        status = a.Status,
+                        message = a.Message
+                    }).ToListAsync();
+                
+                return Ok(new {alerts});
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
         private async Task<(string? token, IActionResult? error)> ResolveUjinTokenAsync(string? authToken)
         {
             if (string.IsNullOrWhiteSpace(authToken))
@@ -399,7 +431,6 @@ namespace XakUjin2026.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
             return (user?.UjinToken, null);
         }
-
 
     }
 }

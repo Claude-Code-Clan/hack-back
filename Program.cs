@@ -27,6 +27,8 @@ builder.Services.AddTransient<TokenHelper>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddTransient<TokenCleanupService>();
 builder.Services.AddHostedService<TokenCleanupHostedService>();
+builder.Services.AddTransient<AlertSkipService>();
+builder.Services.AddHostedService<AlertSkipHostedService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     // Use PostgreSQL

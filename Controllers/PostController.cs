@@ -234,5 +234,91 @@ namespace XakUjin2026.Controllers
             }
         }
 
+        [HttpPost("alert-add")]
+        public async Task<IActionResult> PostAlertDisplay([FromBody] AlertRequest request, [FromHeader(Name = "Authorization")] string authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var displayIds = (request?.DisplayIds ?? Array.Empty<int?>())
+                    .Where(id => id.HasValue)
+                    .Select(id => id!.Value)
+                    .Distinct()
+                    .ToList();
+
+                var existingDeviceIds = await _context.Devices
+                    .Where(d => displayIds.Contains(d.Id))
+                    .Select(d => d.Id)
+                    .ToListAsync();
+
+                var notFound = displayIds.Except(existingDeviceIds).ToList();
+
+                await _context.Alerts
+                    .Where(a => existingDeviceIds.Contains(a.DeviceId) && a.Status == AlertStatus.Warning)
+                    .ExecuteUpdateAsync(s => s.SetProperty(a => a.Status, AlertStatus.Skip));
+
+                var newAlerts = existingDeviceIds
+                    .Select(deviceId => new AlertEntity
+                    {
+                        DeviceId = deviceId,
+                        Message = request?.Message,
+                        Status = AlertStatus.Warning,
+                        CreatedAt = DateTime.UtcNow
+                    })
+                    .ToList();
+
+                if (newAlerts.Count > 0)
+                {
+                    _context.Alerts.AddRange(newAlerts);
+                    await _context.SaveChangesAsync();
+                }
+
+                return Ok(new
+                {
+                    added = newAlerts.Select(a => new { a.Id, a.DeviceId, a.Message, status = a.Status.ToString() }),
+                    notFound
+                });
+            }
+            catch(Exception ex)
+            {   
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+        [HttpPost("alert-set")]
+        public async Task<IActionResult> PostAlertSet([FromBody] AlertSetRequest request, [FromHeader(Name = "Authorization")] string authorizationHeader = null)
+        {
+            try
+            {
+                var authError = await _tokenController.EnsureAuthorizedAsync(authorizationHeader);
+                if (authError != null)
+                    return authError;
+
+                var alertIds = (request?.AlertIds ?? Array.Empty<int>())
+                    .Distinct()
+                    .ToList();
+
+                var resolvedIds = await _context.Alerts
+                    .Where(a => alertIds.Contains(a.Id) && a.Status != AlertStatus.Skip)
+                    .Select(a => a.Id)
+                    .ToListAsync();
+
+                await _context.Alerts
+                    .Where(a => alertIds.Contains(a.Id) && a.Status != AlertStatus.Skip)
+                    .ExecuteUpdateAsync(s => s.SetProperty(a => a.Status, AlertStatus.Resolved));
+
+                return Ok(new { resolved = resolvedIds });
+            }
+            catch(Exception ex)
+            {   
+                Console.WriteLine($"An error occurred while processing the request: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
     }
 }

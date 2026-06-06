@@ -17,8 +17,20 @@ public class ApplicationDbContext : DbContext
     public DbSet<WidgetEntity> Widgets { get; set; }
     public DbSet<RSSLinksEntity> RSSLinks { get; set; }
     public DbSet<RSSWidgetEntity> RSSWidgets { get; set; }
+    public DbSet<AlertEntity> Alerts { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AlertEntity>()
+            .Property(a => a.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<AlertEntity>()
+            .HasOne(a => a.Device)
+            .WithMany()
+            .HasForeignKey(a => a.DeviceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Подъезд уникален в рамках здания по номеру — для upsert при синхронизации.
         modelBuilder.Entity<EntranceEntity>()
             .HasIndex(e => new { e.BuildingId, e.Number })
