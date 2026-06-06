@@ -53,31 +53,32 @@ namespace XakUjin2026.Controllers
                 if (unknownTypes.Count > 0)
                     return BadRequest(new { Message = "Unknown widget type(s)", types = unknownTypes });
 
-                var devices = await _context.Devices
-                    .Include(d => d.Widgets)
+                var deviceIds = await _context.Devices
                     .Where(d => displayIds.Contains(d.Id))
+                    .Select(d => d.Id)
                     .ToListAsync();
 
-                foreach (var device in devices)
-                {
-                    foreach (var wr in widgetRequests)
+                await _context.Widgets
+                    .Where(w => deviceIds.Contains(w.DeviceId))
+                    .ExecuteDeleteAsync();
+
+                var newWidgets = deviceIds
+                    .SelectMany(deviceId => widgetRequests.Select(wr => new WidgetEntity
                     {
-                        var type = typeByTitle[wr.Type!];
-                        var widget = device.Widgets.FirstOrDefault(w => w.WidgetTypeId == type.Id);
-                        if (widget == null)
-                        {
-                            widget = new WidgetEntity { DeviceId = device.Id, WidgetTypeId = type.Id };
-                            device.Widgets.Add(widget);
-                        }
+                        DeviceId = deviceId,
+                        WidgetTypeId = typeByTitle[wr.Type!].Id,
+                        XPosition = wr.x,
+                        YPosition = wr.y,
+                        Width = wr.w,
+                        Height = wr.h
+                    }))
+                    .ToList();
 
-                        widget.XPosition = wr.x;
-                        widget.YPosition = wr.y;
-                        widget.Width = wr.w;
-                        widget.Height = wr.h;
-                    }
+                if (newWidgets.Count > 0)
+                {
+                    _context.Widgets.AddRange(newWidgets);
+                    await _context.SaveChangesAsync();
                 }
-
-                await _context.SaveChangesAsync();
 
                 await _context.Widgets
                     .Where(w => !_context.Devices.Any(d => d.Id == w.DeviceId))

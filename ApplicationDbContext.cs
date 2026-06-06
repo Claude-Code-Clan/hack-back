@@ -52,8 +52,7 @@ public class ApplicationDbContext : DbContext
             .IsUnique();
 
         modelBuilder.Entity<WidgetEntity>()
-            .HasIndex(w => new { w.DeviceId, w.WidgetTypeId })
-            .IsUnique();
+            .HasIndex(w => new { w.DeviceId, w.WidgetTypeId });
 
         // Внешний ключ: виджет -> тип виджета.
         modelBuilder.Entity<WidgetEntity>()
