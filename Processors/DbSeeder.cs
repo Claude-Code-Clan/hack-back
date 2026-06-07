@@ -49,7 +49,7 @@ namespace XakUjin2026.Processors{
         }
         public static void SeedWidgetTypes(ApplicationDbContext context)
         {
-            var widgetTypeNames = new[] { "staticinfo", "news", "parking", "storage", "weather", "camera", "other", "ads" };
+            var widgetTypeNames = new[] { "staticinfo", "news", "parking", "storage", "weather", "camera", "other", "ads", "rss" };
 
             var existing = context.WidgetTypes
                 .Select(w => w.Title)
